@@ -1,45 +1,55 @@
-import { PropsWithChildren, useState } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+type CollapsibleProps = {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  containerStyle?: ViewStyle;
+};
 
-export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const theme = useColorScheme() ?? 'light';
+export function Collapsible({
+  title,
+  children,
+  defaultOpen = false,
+  containerStyle,
+}: CollapsibleProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  const caret = useMemo(() => (open ? "▼" : "▶"), [open]);
 
   return (
-    <ThemedView>
-      <TouchableOpacity
-        style={styles.heading}
-        onPress={() => setIsOpen((value) => !value)}
-        activeOpacity={0.8}>
-        <IconSymbol
-          name="chevron.right"
-          size={18}
-          weight="medium"
-          color={theme === 'light' ? Colors.light.icon : Colors.dark.icon}
-          style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}
-        />
+    <View style={[styles.container, containerStyle]}>
+      <Pressable onPress={() => setOpen((v) => !v)} style={styles.header}>
+        <Text style={styles.caret}>{caret}</Text>
+        <Text style={styles.title}>{title}</Text>
+      </Pressable>
 
-        <ThemedText type="defaultSemiBold">{title}</ThemedText>
-      </TouchableOpacity>
-      {isOpen && <ThemedView style={styles.content}>{children}</ThemedView>}
-    </ThemedView>
+      {open ? <View style={styles.body}>{children}</View> : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  container: {
+    gap: 8,
   },
-  content: {
-    marginTop: 6,
-    marginLeft: 24,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 8,
+  },
+  caret: {
+    width: 18,
+    textAlign: "center",
+    fontSize: 12,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  body: {
+    paddingLeft: 26,
   },
 });
