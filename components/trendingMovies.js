@@ -1,57 +1,74 @@
 import React from "react";
-import { View, Text, TouchableWithoutFeedback, Dimensions, Image, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Dimensions,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+} from "react-native";
 import { useRouter } from "expo-router";
+
+import { image500, fallbackMoviePoster } from "../api/moviedb"; // ✅ correct path
 
 const { width, height } = Dimensions.get("window");
 const ITEM_WIDTH = width * 0.62;
+const ITEM_HEIGHT = height * 0.4;
+const GAP = 14;
 
 export default function TrendingMovies({ data = [] }) {
   const router = useRouter();
-
-  const handleClick = (item, index) => {
-    // Navigate only if you have a route like app/movie.js or app/movie.tsx
-    // router.push({ pathname: "/movie", params: { item: JSON.stringify(item) } });
-
-    // For now (no route yet), do nothing or create the /movie route.
-  };
-
   if (!data?.length) return null;
 
   return (
-    <View style={{ marginBottom: 24 }}>
-      <Text style={{ color: "white", fontSize: 20, marginHorizontal: 16, marginBottom: 12 }}>
-        Trending
-      </Text>
+    <View style={s.wrap}>
+      <Text style={s.title}>Trending</Text>
 
       <FlatList
         data={data}
+        keyExtractor={(item, index) => String(item?.id ?? index)}
         horizontal
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item, index) => String(item?.id ?? index)}
-        snapToInterval={ITEM_WIDTH + 16}
-        decelerationRate="fast"
         contentContainerStyle={{ paddingHorizontal: 16 }}
-        renderItem={({ item, index }) => {
-          const posterSource = item?.poster_path
-            ? { uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }
-            : require("../assets/images/moviePoster1.png");
+        snapToInterval={ITEM_WIDTH + GAP}
+        decelerationRate="fast"
+        renderItem={({ item }) => {
+          const uri = item?.poster_path ? image500(item.poster_path) : fallbackMoviePoster;
 
           return (
-            <TouchableWithoutFeedback onPress={() => handleClick(item, index)}>
-              <Image
-                source={posterSource}
-                style={{
-                  width: ITEM_WIDTH,
-                  height: height * 0.4,
-                  borderRadius: 24,
-                  marginRight: 16,
-                }}
-                resizeMode="cover"
-              />
-            </TouchableWithoutFeedback>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={{ marginRight: GAP }}
+              onPress={() =>
+                router.push({
+                  pathname: "/movie",
+                  params: { item: encodeURIComponent(JSON.stringify(item)) },
+                })
+              }
+            >
+              <Image source={{ uri }} style={s.poster} resizeMode="cover" />
+            </TouchableOpacity>
           );
         }}
       />
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  wrap: { marginBottom: 22 },
+  title: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "800",
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  poster: {
+    width: ITEM_WIDTH,
+    height: ITEM_HEIGHT,
+    borderRadius: 24,
+    backgroundColor: "#222",
+  },
+});

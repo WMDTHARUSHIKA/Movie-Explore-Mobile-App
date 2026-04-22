@@ -1,75 +1,73 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Dimensions,
-  Image,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import React from "react";
+import { View, Text, TouchableOpacity, ScrollView, Image, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { image342, fallbackMoviePoster } from "../api/moviedb";
 
-import { styles } from '../constants/theme';
-
-const { width, height } = Dimensions.get('window');
-
-export default function MovieList({ title, data = [] }) {
+export default function MovieList({ title, data = [], type = "upcoming" }) {
   const router = useRouter();
-
   if (!data?.length) return null;
 
   return (
-    <View className="mb-8 space-y-4">
-      {/* header */}
-      <View className="mx-4 flex-row justify-between items-center">
-        <Text className="text-white text-xl">{title}</Text>
+    <View style={s.wrap}>
+      <View style={s.header}>
+        <Text style={s.title}>{title}</Text>
 
-        <TouchableOpacity>
-          <Text style={styles.text} className="text-lg">
-            See All
-          </Text>
+        {/* ✅ WORKING See All */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() =>
+            router.push({
+              pathname: "/see-all",
+              params: { type, title },
+            })
+          }
+        >
+          <Text style={s.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>
 
-      {/* movie row */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 15 }}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.row}>
         {data.map((item, index) => {
-          const movieName = item?.title || item?.name || 'Untitled';
-
-          const posterSource = item?.poster_path
-            ? { uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }
-            : require('../assets/images/moviePoster2.png');
+          const name = item?.title || item?.name || "Untitled";
+          const uri = item?.poster_path ? image342(item.poster_path) : fallbackMoviePoster;
 
           return (
-            <TouchableWithoutFeedback
+            <TouchableOpacity
               key={String(item?.id ?? index)}
-              onPress={() => {
-                // Works only if you create a route like app/movie.js
-                // router.push({ pathname: "/movie", params: { item: JSON.stringify(item) } });
-
-                // For now do nothing to avoid navigation errors
-              }}
+              activeOpacity={0.85}
+              style={s.card}
+              onPress={() =>
+                router.push({
+                  pathname: "/movie",
+                  params: { item: encodeURIComponent(JSON.stringify(item)) },
+                })
+              }
             >
-              <View className="space-y-1 mr-4">
-                <Image
-                  source={posterSource}
-                  className="rounded-3xl"
-                  style={{ width: width * 0.33, height: height * 0.22 }}
-                  resizeMode="cover"
-                />
-                <Text className="text-neutral-300 ml-1">
-                  {movieName.length > 14 ? movieName.slice(0, 14) + '...' : movieName}
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
+              <Image source={{ uri }} style={s.poster} />
+              <Text style={s.name} numberOfLines={1}>
+                {name}
+              </Text>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  wrap: { marginBottom: 22 },
+  header: {
+    marginHorizontal: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: { color: "#fff", fontSize: 20, fontWeight: "800" },
+  seeAll: { color: "#eab308", fontSize: 15, fontWeight: "700" },
+
+  row: { paddingHorizontal: 16, paddingTop: 12 },
+  card: { marginRight: 14, width: 120 },
+  poster: { width: 120, height: 180, borderRadius: 18, backgroundColor: "#222" },
+  name: { color: "#d4d4d4", marginTop: 8, marginLeft: 2, fontWeight: "600" },
+});

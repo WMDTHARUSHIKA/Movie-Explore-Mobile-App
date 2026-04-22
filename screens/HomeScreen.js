@@ -1,47 +1,116 @@
-import React, { useState } from 'react';
-import { View, Text, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { Bars3CenterLeftIcon, MagnifyingGlassIcon } from 'react-native-heroicons/outline';
+// screens/HomeScreen.js
+import React, { useEffect, useMemo, useState } from "react";
+import { View, Text, Platform, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { Bars3CenterLeftIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import { useRouter } from "expo-router";
 
-import { styles } from '../constants/theme';
-import TrendingMovies from '../components/trendingMovies';
-import MovieList from '../components/movieList';
+import TrendingMovies from "../components/trendingMovies";
+import MovieList from "../components/movieList";
+import Loading from "../components/Loading";
 
-const ios = Platform.OS === 'ios';
+import { fetchTrendingMovies, fetchUpcomingMovies, fetchTopRatedMovies } from "../api/moviedb";
+
+const ios = Platform.OS === "ios";
 
 export default function HomeScreen() {
-  const [trending] = useState([1, 2, 3]);
-  const [upcoming] = useState([1, 2, 3]);
-  const [topRated] = useState([1, 2, 3]);
+  const router = useRouter();
+
+  const [trending, setTrending] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [topRated, setTopRated] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      setLoading(true);
+      const params = { language: "en-US", page: 1 };
+
+      const [t, u, r] = await Promise.all([
+        fetchTrendingMovies(params),
+        fetchUpcomingMovies(params),
+        fetchTopRatedMovies(params),
+      ]);
+
+      if (!mounted) return;
+
+      setTrending(t?.results || []);
+      setUpcoming(u?.results || []);
+      setTopRated(r?.results || []);
+      setLoading(false);
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const searchSeedMovies = useMemo(
+    () => [...trending, ...upcoming, ...topRated].filter(Boolean),
+    [trending, upcoming, topRated]
+  );
 
   return (
-    <View className="flex-1 bg-neutral-800">
-      {/* search bar and logo */}
-      <SafeAreaView className={ios ? '-mb-2' : 'mb-3'}>
+    <View style={s.container}>
+      <SafeAreaView style={[s.safeArea, ios ? { marginBottom: -8 } : { marginBottom: 12 }]}>
         <StatusBar style="light" />
-        <View className="flex-row justify-between items-center mx-4">
-          <Bars3CenterLeftIcon size={30} strokeWidth={2} color="white" />
 
-          <Text className="text-white text-3xl font-bold">
-            <Text style={styles.text}>M</Text>ovies
-          </Text>
+        <View style={s.header}>
+          {/* ✅ Menu icon -> Favorites page */}
+          <TouchableOpacity
+            style={s.headerIconBtn}
+            activeOpacity={0.7}
+            onPress={() => router.push("/favorites")}
+          >
+            <Bars3CenterLeftIcon size={30} strokeWidth={2} color="#fff" />
+          </TouchableOpacity>
 
-          <TouchableOpacity>
-            <MagnifyingGlassIcon size={30} strokeWidth={2} color="white" />
+          <Text style={s.logo}>Movies</Text>
+
+          {/* ✅ Search icon -> Search page */}
+          <TouchableOpacity
+            style={s.headerIconBtn}
+            activeOpacity={0.7}
+            onPress={() =>
+              router.push({
+                pathname: "/search",
+                params: {
+                  seed: encodeURIComponent(JSON.stringify(searchSeedMovies.slice(0, 20))),
+                },
+              })
+            }
+          >
+            <MagnifyingGlassIcon size={28} strokeWidth={2} color="#fff" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
-      {/* main content */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 10 }}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 12 }}>
         <TrendingMovies data={trending} />
-        <MovieList title="Upcoming" data={upcoming} />
-        <MovieList title="Top Rated" data={topRated} />
+        <MovieList title="Upcoming" data={upcoming} type="upcoming" />
+        <MovieList title="Top Rated" data={topRated} type="topRated" />
       </ScrollView>
+
+      {loading && <Loading />}
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#000" },
+  safeArea: { backgroundColor: "#000" },
+
+  header: {
+    marginHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  logo: { color: "#fff", fontSize: 28, fontWeight: "800" },
+
+  headerIconBtn: { padding: 6 },
+});
