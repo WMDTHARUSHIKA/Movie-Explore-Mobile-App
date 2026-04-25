@@ -16,8 +16,8 @@ const resolvePoster = (poster_path) => {
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { favorites, ready, clearFavorites } = useFavorites();
-
+  const { favorites, ready, clearFavorites, toggleFavorite } = useFavorites();
+  
   return (
     <SafeAreaView style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -32,6 +32,19 @@ export default function FavoritesScreen() {
         <TouchableOpacity style={s.iconBtn} onPress={clearFavorites}>
           <TrashIcon size={22} strokeWidth={2.2} color="#fff" />
         </TouchableOpacity>
+
+            <TouchableOpacity
+                   onPress={() =>
+                  toggleFavorite({ id: 1111, title: "TEST MOVIE", poster_path: null })
+                 }
+              style={{ marginHorizontal: 16, marginBottom: 12, padding: 12, backgroundColor: "#222", borderRadius: 12 }}
+          >
+           <Text style={{ color: "#fff", fontWeight: "800", textAlign: "center" }}>
+            TEST SAVE TO FIREBASE
+           </Text>
+        </TouchableOpacity>
+
+
       </View>
 
       {!ready ? (
@@ -48,10 +61,11 @@ export default function FavoritesScreen() {
           renderItem={({ item }) => {
             const uri = resolvePoster(item?.poster_path);
             const name = item?.title || item?.name || "Movie";
+
             return (
               <TouchableOpacity
-                activeOpacity={0.85}
                 style={s.card}
+                activeOpacity={0.85}
                 onPress={() =>
                   router.push({
                     pathname: "/movie",

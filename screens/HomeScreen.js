@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Platform, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { Bars3CenterLeftIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import { MagnifyingGlassIcon, UserCircleIcon } from "react-native-heroicons/outline";
 import { useRouter } from "expo-router";
 
 import TrendingMovies from "../components/trendingMovies";
@@ -59,13 +59,13 @@ export default function HomeScreen() {
         <StatusBar style="light" />
 
         <View style={s.header}>
-          {/* ✅ Menu icon -> Favorites page */}
+          {/* ✅ Account icon -> Account page */}
           <TouchableOpacity
             style={s.headerIconBtn}
             activeOpacity={0.7}
-            onPress={() => router.push("/favorites")}
+            onPress={() => router.push("/account")}
           >
-            <Bars3CenterLeftIcon size={30} strokeWidth={2} color="#fff" />
+            <UserCircleIcon size={34} strokeWidth={2} color="#fff" />
           </TouchableOpacity>
 
           <Text style={s.logo}>Movies</Text>
@@ -111,6 +111,5 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
   },
   logo: { color: "#fff", fontSize: 28, fontWeight: "800" },
-
   headerIconBtn: { padding: 6 },
 });
